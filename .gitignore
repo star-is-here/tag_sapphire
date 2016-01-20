@@ -1,3 +1,4 @@
 *.sublime*
 *.json
-!examine_keys.json
+!feature_list.json
+!dimensions_kept.json
