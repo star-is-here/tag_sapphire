@@ -1,4 +1,4 @@
 *.sublime*
 *.json
 !feature_list.json
-!dimensions_kept.json
+!topic_*.json
