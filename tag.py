@@ -74,15 +74,15 @@ if __name__ == "__main__":
     # Number of features to keep after weighting
     prop_feat = 100000
     # Maximum document frequency
-    prop_maxdf = .5
+    prop_maxdf = .75
     # Minimum document frequency
-    prop_mindf = 2
+    prop_mindf = 1
     # Number of components to keep after dimension reduction
     prop_comp = 100
     # Number of clusters to generate
     prop_clust = 60
     # Words to keep
-    prop_words = 30
+    prop_words = 50
     # Stopwords to exclude
     add_stopwords = ['department', 'of', 'commerce', 'doc', 'noaa', 'national', 'data', 'and', 'the', 'for', 'centers', 'united', 'states']
     print_break('Options selected:')
@@ -108,7 +108,7 @@ if __name__ == "__main__":
     print_break('Weighting ngrams')
     t0 = time.time()
     print 'Time started: %s'%t0
-    vect = TfidfVectorizer(ngram_range=(1,2), max_df=prop_maxdf, min_df=prop_mindf, stop_words=stopwords, max_features=prop_feat)
+    vect = TfidfVectorizer(ngram_range=(1,1), max_df=prop_maxdf, min_df=prop_mindf, stop_words=stopwords, max_features=prop_feat)
     # vect = CountVectorizer(ngram_range=(1,1), stop_words=stopwords, max_features=prop_feat)
     X_vect = vect.fit_transform(X_pre)
     print 'Time elapsed: %s'%(time.time()-t0)
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     print_break('Topic Generation: Latent Dirichlet Allocation')
     t0 = time.time()
     print 'Time started: %s'%t0
-    lda = LatentDirichletAllocation(n_topics=prop_clust, max_iter=5).fit(X_vect)
+    lda = LatentDirichletAllocation(n_topics=prop_clust, max_iter=5, n_jobs=-1).fit(X_vect)
     print 'LDA Time elapsed: %s'%(time.time()-t0)
     with open('topic_lda.json', 'wb') as f:
         json.dump(save_top_words(lda, vect.get_feature_names(), prop_words), f)
