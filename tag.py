@@ -72,7 +72,11 @@ if __name__ == "__main__":
     # Setting Options
     #####################################################################################################################
     # Number of features to keep after weighting
-    prop_feat = 1000
+    prop_feat = 100000
+    # Maximum document frequency
+    prop_maxdf = .5
+    # Minimum document frequency
+    prop_mindf = 2
     # Number of components to keep after dimension reduction
     prop_comp = 100
     # Number of clusters to generate
@@ -81,32 +85,34 @@ if __name__ == "__main__":
     prop_words = 30
     # Stopwords to exclude
     add_stopwords = ['department', 'of', 'commerce', 'doc', 'noaa', 'national', 'data', 'and', 'the', 'for', 'centers', 'united', 'states']
-    stopwords = ENGLISH_STOP_WORDS.union(add_stopwords)
     print_break('Options selected:')
     print_break('# of features retained: %s, # of components: %s, # of clusters: %s, # of tags: %s'%(prop_feat, prop_comp, prop_clust, prop_words))
     print_break('Stopwords used:')
-    pp.pprint(stopwords)
     #####################################################################################################################
     # Open file
     #####################################################################################################################
     print_break('Loading local noaa.json')
     with open('./noaa.json', 'rb') as f:
         noaa = json.load(f)
-    # print_break('Generating X input')
-    # X_pre = []
-    # for entry in tqdm(noaa):
-    #     X_pre.append(create_doc(entry))
+    print_break('Throwing out existing keywords')
+    additional_stopwords = CountVectorizer().fit(itertools.chain(*[ x['keyword'] for x in noaa ])).get_feature_names()
+    stopwords = ENGLISH_STOP_WORDS.union(additional_stopwords + add_stopwords)
+    pp.pprint(stopwords)
+    print_break('Generating X input')
+    X_pre = []
+    for entry in tqdm(noaa):
+        X_pre.append(create_doc(entry))
     #####################################################################################################################
     # Processing ngrams to weight
     #####################################################################################################################
-    # print_break('Weighting ngrams')
-    # t0 = time.time()
-    # print 'Time started: %s'%t0
-    # vect = TfidfVectorizer(ngram_range=(1,3), stop_words=stopwords, max_features=prop_feat)
-    # # vect = CountVectorizer(ngram_range=(1,1), stop_words=stopwords, max_features=prop_feat)
-    # X_vect = vect.fit_transform(X_pre)
-    # print 'Time elapsed: %s'%(time.time()-t0)
-    # print 'n_samples: %s, n_features: %s'%X_vect.shape
+    print_break('Weighting ngrams')
+    t0 = time.time()
+    print 'Time started: %s'%t0
+    vect = TfidfVectorizer(ngram_range=(1,2), max_df=prop_maxdf, min_df=prop_mindf, stop_words=stopwords, max_features=prop_feat)
+    # vect = CountVectorizer(ngram_range=(1,1), stop_words=stopwords, max_features=prop_feat)
+    X_vect = vect.fit_transform(X_pre)
+    print 'Time elapsed: %s'%(time.time()-t0)
+    print 'n_samples: %s, n_features: %s'%X_vect.shape
     # with open('feature_list.json', 'wb') as f:
     #     json.dump(vect.get_feature_names(), f)
     #####################################################################################################################
@@ -140,13 +146,13 @@ if __name__ == "__main__":
     # centroids = dim.inverse_transform(clust.cluster_centers_)
     # with open('topic_lsa_kmeans.json', 'wb') as f:
     #     json.dump(show_keywords(centroids, vect.get_feature_names(), prop_words), f)
-    # print_break('Topic Generation: Latent Dirichlet Allocation')
-    # t0 = time.time()
-    # print 'Time started: %s'%t0
-    # lda = LatentDirichletAllocation(n_topics=prop_clust, max_iter=5).fit(X_vect)
-    # print 'LDA Time elapsed: %s'%(time.time()-t0)
-    # with open('topic_lda.json', 'wb') as f:
-    #     json.dump(save_top_words(lda, vect.get_feature_names(), prop_words), f)
+    print_break('Topic Generation: Latent Dirichlet Allocation')
+    t0 = time.time()
+    print 'Time started: %s'%t0
+    lda = LatentDirichletAllocation(n_topics=prop_clust, max_iter=5).fit(X_vect)
+    print 'LDA Time elapsed: %s'%(time.time()-t0)
+    with open('topic_lda.json', 'wb') as f:
+        json.dump(save_top_words(lda, vect.get_feature_names(), prop_words), f)
     # print_break('Topic Generation: Dirichlet Process Gaussian Mixture Model')
     # t0 = time.time()
     # print 'Time started: %s'%t0
